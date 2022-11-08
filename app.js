@@ -1,6 +1,7 @@
 require ('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
+const mongobdSanitize = require('express-mongo-sanitize');
 const helmet = require('helmet');
 const path = require('path');
 const app = express();
@@ -12,9 +13,9 @@ mongoose.connect(`mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD
     .then(() => console.log('Connexion à MongoDB réussie !'))
     .catch(() => console.log('Connexion à MongoDB échouée !'));
 
-
 //Securisation des en-tetes http.
-app.use(helmet());
+app.use(helmet()); //Helmet est un middleware qui sécurise les en-têtes HTTP.
+app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" })); //Permet de limiter les requêtes http à l'origine du site
 
 //Parametrage du CORS.
 app.use((req, res, next) => {
@@ -27,10 +28,20 @@ app.use((req, res, next) => {
 //Parser les objet json.
 app.use(express.json());
 
+//Evite l'injection de code dans la base de données.
+app.use(mongobdSanitize()); //MongoDB Sanitize est un middleware qui nettoie les données envoyées par l'utilisateur pour éviter les injections de code.
+
 //Routes.
 app.use('/api/auth', userRoutes);
-//app.use('/api/sauces', sauceRoutes);
-app.use('/images', express.static(path.join(__dirname, 'images')));
+app.use('/api/sauces', sauceRoutes);
+app.use('/images', express.static(path.join(__dirname, 'images'))); //Permet de charger les images statiques.
+
+//cree un dossier images si il n'existe pas.
+const fs = require('fs');
+const dir = './images'; //On definit le chemin du dossier.
+if (!fs.existsSync(dir)){
+    fs.mkdirSync(dir);
+} //Si le dossier n'existe pas, on le crée.
 
 //Exportation de l'application.
 module.exports = app;
