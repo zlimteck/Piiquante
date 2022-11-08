@@ -14,7 +14,6 @@ const normalizePort = val => {
     return false;
 }; 
 
-
 const port = normalizePort(process.env.PORT || '3000');
 app.set('port', port); 
 
@@ -50,7 +49,3 @@ server.on('listening', () => {
 
 //Ecoute du port.
 server.listen(port);
-    
-
-
-
