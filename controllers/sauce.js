@@ -18,7 +18,7 @@ exports.createSauce = (req, res, next) => {
     sauce.save() //On enregistre la sauce dans la base de données.
     .then(() => res.status(201).json({message: 'Sauce enregistrée !'}))
     .catch(error => res.status(400).json({error}));
-    console.log(error);
+    console.log(`Nouvelle sauce ${sauceObject.name} enregistrée par ${req.auth.userId} !`);  //Console log avec la sauce créée et lútilisateur qui la crée
 };
 
 //Modification d'une sauce.
@@ -27,6 +27,17 @@ exports.modifySauce = (req, res, next) => {
 
 //Suppression d'une sauce.
 exports.deleteSauce = (req, res, next) => {
+    Sauce.findOne({_id: req.params.id}) //On récupère la sauce correspondant à l'id.
+    .then(sauce => {
+        const filename = sauce.imageUrl.split('/images/')[1]; //On récupère le nom du fichier.
+        fs.unlink(`images/${filename}`,() => { //On supprime le fichier.
+            Sauce.deleteOne({_id: req.params.id}) //On supprime la sauce correspondant à l'id.
+            .then(() => res.status(200).json({message: 'Sauce supprimé !'}))
+            .catch(error => res.status(400).json({error}));
+            console.log(`Sauce ${sauce.name} supprimée par ${req.auth.userId} !`); //Console log avec la sauce supprimée et l'utilisateur qui la supprime.
+        });
+    })
+    .catch(error => res.status(500).json({error}));
 };
 
 //Récupération d'une sauce.
