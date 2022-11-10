@@ -18,11 +18,20 @@ exports.createSauce = (req, res, next) => {
     sauce.save() //On enregistre la sauce dans la base de données.
     .then(() => res.status(201).json({message: 'Sauce enregistrée !'}))
     .catch(error => res.status(400).json({error}));
-    console.log(`Nouvelle sauce ${sauceObject.name} enregistrée par ${req.auth.userId} !`);  //Console log avec la sauce créée et lútilisateur qui la crée
+    console.log(`Nouvelle sauce ${sauceObject.name} enregistrée par ${req.auth.userId} !`);  //Console log avec la sauce créée et lútilisateur qui la crée.
 };
 
 //Modification d'une sauce.
 exports.modifySauce = (req, res, next) => {
+    const sauceObject = req.file ? //On vérifie si req.file existe.
+    {
+        ...JSON.parse(req.body.sauce), //On extrait l'objet sauce du corps de la requête.
+        imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}` //On génère l'url de l'image.
+    } : {...req.body}; //On extrait l'objet sauce du corps de la requête.
+    Sauce.updateOne({_id: req.params.id}, {...sauceObject, _id: req.params.id}) //On modifie la sauce correspondant à l'id.
+    .then(() => res.status(200).json({message: 'Sauce modifiée !'}))
+    .catch(error => res.status(400).json({error}));
+    console.log(`Sauce ${sauceObject.name} modifiée par ${req.auth.userId} !`); //Console log avec la sauce modifiée et l'utilisateur qui la modifie.
 };
 
 //Suppression d'une sauce.
@@ -32,12 +41,12 @@ exports.deleteSauce = (req, res, next) => {
         const filename = sauce.imageUrl.split('/images/')[1]; //On récupère le nom du fichier.
         fs.unlink(`images/${filename}`,() => { //On supprime le fichier.
             Sauce.deleteOne({_id: req.params.id}) //On supprime la sauce correspondant à l'id.
-            .then(() => res.status(200).json({message: 'Sauce supprimé !'}))
-            .catch(error => res.status(400).json({error}));
+            .then(() => res.status(200).json({message: 'Sauce supprimé !'})) //On renvoie un message de confirmation.
+            .catch(error => res.status(400).json({error})); //On renvoie une erreur si la suppression échoue.
             console.log(`Sauce ${sauce.name} supprimée par ${req.auth.userId} !`); //Console log avec la sauce supprimée et l'utilisateur qui la supprime.
         });
     })
-    .catch(error => res.status(500).json({error}));
+    .catch(error => res.status(500).json({error})); //Si la sauce n'existe pas, on renvoie une erreur 500.
 };
 
 //Récupération d'une sauce.
